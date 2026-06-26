@@ -78,13 +78,10 @@ async def twilio_webhook(Body: str = Form(...), From: str = Form(...)):
         
         return Response(content=str(resposta_twilio), media_type="application/xml")
         
-    except Exception as e:
-        logger.error(f"❌ Erro crítico no processamento da IA: {e}")
+   except Exception as e:
+        logger.error(f"❌ Erro crítico no processamento da IA: {str(e)}") # <--- Adicionei o str(e) aqui
         
         # 🛟 PLANO DE CONTINGÊNCIA (Fallback)
         fallback = MessagingResponse()
         fallback.message("We are experiencing high volume right now. Please call us directly at 555-0199 for immediate service.")
         return Response(content=str(fallback), media_type="application/xml")
-
-# Adaptador Serverless para a Vercel
-handler = Mangum(app)
