@@ -1,6 +1,6 @@
 fastapi==0.110.0
 pydantic==2.6.4
 mangum==0.17.0
-google-generativeai==0.4.1
+openai==1.14.2
 twilio==8.12.0
 python-dotenv==1.0.1
