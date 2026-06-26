@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="SaaS AI Dispatcher - Gringa",
     description="Motor de IA ultrarrápido para atendimento via SMS.",
-    version="3.0 - Mixtral Edition"
+    version="5.0 - Llama 3.3 Edition"
 )
 
 # 3. SEGURANÇA E CONEXÃO COM A IA (GROQ)
@@ -47,7 +47,7 @@ CRITICAL RULES:
 async def health_check():
     return {
         "status": "operational", 
-        "engine": "Groq Mixtral 8x7b", 
+        "engine": "Groq Llama 3.3 70B", 
         "latency": "ultra-low"
     }
 
@@ -57,9 +57,9 @@ async def twilio_webhook(Body: str = Form(...), From: str = Form(...)):
     logger.info(f"📨 Nova mensagem recebida de {From}: {Body}")
     
     try:
-        # Chamada assíncrona para a IA usando o Mixtral (O Tanque de Guerra)
+        # Chamada assíncrona para a IA usando o modelo sugerido pelo Claude
         resposta = await client.chat.completions.create(
-            model="mixtral-8x7b-32768",
+            model="llama-3.3-70b-versatile",
             messages=[
                 {"role": "system", "content": PROMPT_SISTEMA},
                 {"role": "user", "content": Body}
