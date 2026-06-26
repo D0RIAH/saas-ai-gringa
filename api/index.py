@@ -3,14 +3,14 @@ import logging
 from fastapi import FastAPI, Form
 from fastapi.responses import Response
 from twilio.twiml.messaging_response import MessagingResponse
-from openai import AsyncOpenAI  # <-- UPGRADE: Async para velocidade extrema
+from openai import AsyncOpenAI
 from mangum import Mangum
 
-# 1. CONFIGURAÇÃO PROFISSIONAL DE LOGS (Monitoramento)
+# 1. CONFIGURAÇÃO DE LOGS
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# 2. INICIALIZAÇÃO DO APP COM METADADOS
+# 2. INICIALIZAÇÃO DO APP
 app = FastAPI(
     title="SaaS AI Dispatcher - Gringa",
     description="Motor de IA ultrarrápido para atendimento via SMS.",
@@ -22,13 +22,12 @@ CHAVE_API = os.getenv("GROQ_API_KEY")
 if not CHAVE_API:
     logger.error("ALERTA CRÍTICO: GROQ_API_KEY não configurada na Vercel!")
 
-# Usando o cliente Assíncrono (Alta performance em Serverless)
 client = AsyncOpenAI(
     api_key=CHAVE_API,
     base_url="https://api.groq.com/openai/v1"
 )
 
-# 4. ENGENHARIA DE PROMPT AVANÇADA (O Cérebro da Operação)
+# 4. ENGENHARIA DE PROMPT (O Cérebro)
 PROMPT_SISTEMA = """
 You are 'Alex', an expert AI dispatcher for 'Texas Cool HVAC'. 
 Your personality is highly professional, empathetic, and exceptionally concise.
@@ -43,7 +42,6 @@ CRITICAL RULES:
 - Always reply in English.
 """
 
-# ROTA DE STATUS (Para você saber que está rodando)
 @app.get("/", tags=["Health Check"])
 async def health_check():
     return {
@@ -52,36 +50,38 @@ async def health_check():
         "latency": "ultra-low"
     }
 
-# ROTA PRINCIPAL (Onde o Twilio bate)
 @app.post("/webhook", tags=["Twilio Webhook"])
 async def twilio_webhook(Body: str = Form(...), From: str = Form(...)):
     logger.info(f"📨 Nova mensagem recebida de {From}: {Body}")
     
     try:
-        # ⚡ Chamada assíncrona para a IA
+        # Chamada para a IA
         resposta = await client.chat.completions.create(
             model="llama3-70b-8192",
             messages=[
                 {"role": "system", "content": PROMPT_SISTEMA},
                 {"role": "user", "content": Body}
             ],
-            temperature=0.3, # Baixa temperatura = respostas lógicas, sem "criatividade" maluca
-            max_tokens=100   # Força respostas curtas para economizar $$
+            temperature=0.3,
+            max_tokens=100
         )
         
         texto_ia = resposta.choices[0].message.content
         logger.info(f"🤖 Resposta gerada para {From}: {texto_ia}")
         
-        # 📦 Formatação do XML para o Twilio
+        # XML para o Twilio
         resposta_twilio = MessagingResponse()
         resposta_twilio.message(texto_ia)
         
         return Response(content=str(resposta_twilio), media_type="application/xml")
         
-   except Exception as e:
-        logger.error(f"❌ Erro crítico no processamento da IA: {str(e)}") # <--- Adicionei o str(e) aqui
+    except Exception as e:
+        # AQUI ESTÁ O NOSSO DETETIVE DE ERROS
+        logger.error(f"❌ Erro crítico no processamento da IA: {str(e)}")
         
-        # 🛟 PLANO DE CONTINGÊNCIA (Fallback)
         fallback = MessagingResponse()
         fallback.message("We are experiencing high volume right now. Please call us directly at 555-0199 for immediate service.")
         return Response(content=str(fallback), media_type="application/xml")
+
+# ATENÇÃO: Esta linha é o que a Vercel procura. Não pode ter espaço antes dela.
+handler = Mangum(app)
